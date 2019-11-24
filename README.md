@@ -13,7 +13,7 @@ In fact, marketing spending in the banking industry is massive, meaning that it 
 
 ## 2. Workflow
 The following figure shows the workflow of Predicting customers' response to its telemarketing campaign 
-![Image test]({{ site.url }}/images/project3-1.png)
+![Image test](/images/project3-1.png)
 
 
 
@@ -44,26 +44,26 @@ The following figures describe the dataset of bank marketing
 
 
 
-![Image test]({{ site.url }}/images/project3-3.png)
+![Image test](/images/project3-3.png)
 
 
-![Image test]({{ site.url }}/images/project3-4.png)
+![Image test](/images/project3-4.png)
 
 
 
-![Image test]({{ site.url }}/images/project3-5.png)
+![Image test](/images/project3-5.png)
 
 
-![Image test]({{ site.url }}/images/project3-6.png)
+![Image test](/images/project3-6.png)
 
 ### 2.4 Model Building
 
-![Image test]({{ site.url }}/images/project3-7.png)
+![Image test](/images/project3-7.png)
 
 
 ## 2.5 Results
 
-![Image test]({{ site.url }}/images/project3-8.png)
+![Image test](/images/project3-8.png)
 
 
 ## 4. Resource Description
