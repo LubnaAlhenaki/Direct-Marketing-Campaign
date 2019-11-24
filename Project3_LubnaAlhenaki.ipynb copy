@@ -1,0 +1,1673 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Direct Marketing Classification Problem\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 1.Introducation"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 1.1 Problem Statement \n",
+    "\n",
+    "Marketing selling campaigns constitute a typical strategy to enhance business.Companies use direct \n",
+    "marketing when targeting segments of customers by contacting them to meet a specific goal. \n",
+    "In this project classification model will be used to predict if the client will subscribe to a term deposit or not.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 1.2 Dataset \n",
+    "The data is related with direct marketing campaigns (phone calls) of a Portuguese banking institution from \n",
+    "May 2008 to November 2010. This dataset consist of 21 features and 45211 instance.\n",
+    "\n",
+    "Dataset is avaliable in http://archive.ics.uci.edu/ml/datasets/Bank+Marketing"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "import matplotlib.pyplot as plt #plot\n",
+    "import seaborn as sns #plot\n",
+    "%matplotlib inline\n",
+    "import pylab\n",
+    "from statsmodels.graphics.mosaicplot import mosaic #plot\n",
+    "from seaborn import axes_style #Remove grid\n",
+    "\n",
+    "from sklearn.model_selection import train_test_split, cross_val_score,cross_validate ,GridSearchCV\n",
+    "from sklearn.metrics import precision_score, recall_score, accuracy_score, roc_auc_score,confusion_matrix,make_scorer\n",
+    "from sklearn.linear_model import LogisticRegression\n",
+    "from sklearn.metrics import classification_report\n",
+    "from sklearn.neighbors import KNeighborsClassifier\n",
+    "from sklearn import metrics\n",
+    "from sklearn.preprocessing import StandardScaler\n",
+    "from sklearn.ensemble import RandomForestClassifier\n",
+    "from sklearn.svm import SVC\n",
+    "from sklearn.naive_bayes import BernoulliNB, MultinomialNB, GaussianNB\n",
+    "\n",
+    "\n",
+    "from sklearn.pipeline import Pipeline\n",
+    "\n",
+    "import statsmodels.api as sm"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 2. Load Portuguese Banking Institution Dataset"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": false
+   },
+   "outputs": [],
+   "source": [
+    "df=pd.read_csv(\"bank-additional-full.csv\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.info()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.dtypes"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "len(df.month.value_counts())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 3.Cleaning Data"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 3.1 Check Null Values"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.isnull().count() ## There is no null values in dataset"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 3.2  Statistics Summary on the Dataset"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.describe()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 3.3 Deleting unnecessary featuers \n",
+    "such as duration because this attribute highly affects the output target (e.g., if duration=0 then y='no')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df=df.drop(columns=['duration'])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 3.4 Dealing with Unknown Categorical Values "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#####  In this stage, the cross-tabulation was used to predict the unknown missing value. The hypothesis was one feature influenced by another.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# df[\"housing\"]=df[\"housing\"].replace(\"unknown\",\"yes\")\n",
+    "# df[\"loan\"]=df[\"loan\"].replace(\"unknown\",\"no\")\n",
+    "# df[\"education\"]=df[\"education\"].replace(\"unknown\",\"university.degree\")\n",
+    "# df[\"job\"]=df[\"job\"].replace(\"unknown\",\"admin.\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "pd.crosstab(df.job,df.education)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "From the above cross-tabulation, we can observe that when there is a management job such as admin must of education is the university level \n",
+    "on the other hand when it's blue-collar must of education are basic.4y, basic.6y, or basic.9y. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['education']=np.where(((df.job == 'admin.')| (df.job == 'entrepreneur')|(df.job == 'management')|(df.job == 'self-employed')|(df.job == 'unemployed'))&(df.education == 'unknown'),'university.degree',df['education'])\n",
+    "df['education']=np.where(((df.job == 'blue-collar')|(df.job == 'housemaid')|(df.job == 'unknown')|(df.job == 'retired'))&(df.education == 'unknown'),'university.degree',df['education'])\n",
+    "df['education']=np.where(((df.job == 'services')|(df.job == 'student'))&(df.education == 'unknown'),'university.degree',df['education'])\n",
+    "df['education']=np.where((df.job == 'technician')&(df.education == 'unknown'),'university.degree',df['education'])\n",
+    "df['job']=np.where(((df.education == 'university.degree')|(df.education == 'high.school'))&(df.job == 'unknown'),'admin.',df['job'])\n",
+    "df['job']=np.where(((df.education == 'basic.4y')|(df.education == 'basic.6y')|(df.education == 'basic.9y'))&(df.job == 'unknown'),'blue-collar',df['job'])\n",
+    "df['job']=np.where((df.education == 'professional.course')& (df.job == 'unknown'),'technician',df['job'])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "From the job feature, we try to predict the unknown values of housing after that  by using housing feature we predict the loan unknown values"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "pd.crosstab(df.job,df.housing)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df[\"housing\"]=df[\"housing\"].replace(\"unknown\",\"yes\")\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "pd.crosstab(df.housing,df.loan)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['loan']=df['loan'].replace(\"unknown\",\"yes\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "pd.crosstab(df.loan,df.default)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['default']=df['default'].replace(\"unknown\",\"no\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 3.5 Dealing with Categorical Values  ( One Hot Encoding and Ordinal Converting)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2=df.copy()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Tony brilliantly Encoding"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#we can package all of this into a function...\n",
+    "\n",
+    "def explode(frame,cat_col,sep=','):\n",
+    "    '''inputs-\n",
+    "    frame: input dataframe\n",
+    "    cat_col: name of the category column\n",
+    "    sep: is the seperator between the catgories\n",
+    "    \n",
+    "    output-\n",
+    "    new dataframe with binary values for category columns\n",
+    "    '''\n",
+    "    df=frame.copy()\n",
+    "    df[cat_col]=df[cat_col].apply(lambda x: x.replace(' ','').split(sep))\n",
+    "    categories=list(set(df[cat_col].sum()))\n",
+    "    df_cat=pd.DataFrame(0,index=df.index,columns=categories)\n",
+    "    for cat in categories:\n",
+    "        df_cat[cat]=df[cat_col].apply(lambda cat_list: int(cat in cat_list))\n",
+    "    return pd.concat([df,df_cat],axis=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2=explode(df2,'job',sep='/')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2=explode(df2,'day_of_week',sep='/')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2=explode(df2,'month',sep='/')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2=explode(df2,'poutcome',sep='/')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2=explode(df2,'marital',sep='/')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2['default_new']=pd.get_dummies(df2.default, drop_first=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2['housing_new']=pd.get_dummies(df2.housing, drop_first=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2['loan_new']=pd.get_dummies(df2.loan, drop_first=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2['y_new']=pd.get_dummies(df2.y, drop_first=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2['contact_new']=pd.get_dummies(df2.contact, drop_first=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2['education']=df2.education.replace({'illiterate':0,'basic.4y':4,'basic.6y':6,'basic.9y':9,'high.school':12,'professional.course':14,'university.degree':16})"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2.poutcome.value_counts()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2.columns"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2=df2.drop(columns=['y','housing','job','default','loan','contact','month','day_of_week','poutcome','marital'])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2.info()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 4. Exploratory Data Analysis (EDA)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "__The observations from the following visualization are:__\n",
+    "\n",
+    "\n",
+    ">1. The response rate of subscribers (predicted value) is 11.3% of not subscribed therefore like most of the marketing datasets this dataset is unbalanced    \n",
+    ">2. 60.5% of the clients who subscribed were married\n",
+    ">3. 63.5% of subscribers were contacted via cellular \n",
+    ">4. 54.8% of subscribers did have housing loans while 82.4% did not have a personal loan \n",
+    ">5. 86.3% of subscribers were not contacted in past campaigns\n",
+    ">6. 78.7% of contact were apllied between May and Aug "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.y.value_counts()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.poutcome.value_counts()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "transport_methodes = ['No','Yes']\n",
+    "transport_count = df.y.value_counts() # e.g. total count of random survey\n",
+    "col = ['g', 'b'] \n",
+    "plt.pie(transport_count, labels=transport_methodes, colors=col,autopct='%1.1f%%')\n",
+    "plt.title('The Response Rate of Subscribers')\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sns.set(font_scale=1.50)\n",
+    "with axes_style({'axes.grid': False}):\n",
+    "        p = sns.countplot(x ='y',hue='y',data=df,saturation=1,\n",
+    "                          edgecolor=(0,0,0),\n",
+    "                          linewidth=2, palette =['#5cb85c','#5bc0de'])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sns.set(font_scale=1.50)\n",
+    "with axes_style({'axes.grid': False}):\n",
+    "    p = sns.countplot(x ='marital',hue='y',data=df,saturation=1,\n",
+    "                      edgecolor=(0,0,0),\n",
+    "                      linewidth=2)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# d=df.groupby(['marital','y'])\n",
+    "# d.groups"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [],
+   "source": [
+    "sns.set(font_scale=1.30)\n",
+    "with axes_style({'axes.grid': False}):\n",
+    "        p = sns.countplot(x ='contact',hue='y',data=df,saturation=1,\n",
+    "                          edgecolor=(0,0,0),\n",
+    "                          linewidth=2)\n",
+    " "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sns.set(font_scale=1.50)\n",
+    "with axes_style({'axes.grid': False}):\n",
+    "    p = sns.countplot(x ='loan',hue='y',data=df,saturation=1,\n",
+    "                      edgecolor=(0,0,0),\n",
+    "                      linewidth=2, palette=['#5bc0de','#d9534f'])\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sns.set(font_scale=1.50)\n",
+    "# with axes_style({'axes.grid': False}):\n",
+    "p = sns.countplot(x ='housing',hue='y',data=df,saturation=1,\n",
+    "                  edgecolor=(0,0,0),\n",
+    "                  linewidth=2, palette=['#5bc0de','#d9534f'])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "transport_methodes = ['Nonexistent','Failure','Success']\n",
+    "transport_count = df.poutcome.value_counts() # e.g. total count of random survey\n",
+    "plt.pie(transport_count, labels=transport_methodes, autopct='%1.1f%%')\n",
+    "plt.title('The Results of Past Campaigns for Subscribers')\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# sns.set(font_scale=1)\n",
+    "# props = lambda key: {'color': 'r' if 'no' in key else 'gray'}\n",
+    "\n",
+    "\n",
+    "\n",
+    "# mosaic(df, ['contact', 'y'], title='Job ', properties=props)\n",
+    "\n",
+    "# plt.show()\n",
+    "# plt.figure(figsize=(10,100))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sns.set(font_scale=1.50)\n",
+    "p = sns.countplot(y ='job',hue='y',data=df,saturation=1,\n",
+    "                  edgecolor=(0,0,0),\n",
+    "                  linewidth=2)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sns.set(font_scale=1.50)\n",
+    "# with axes_style({'axes.grid': False}):\n",
+    "p = sns.countplot(y ='month',hue='y',data=df,saturation=1,\n",
+    "                  edgecolor=(0,0,0),\n",
+    "                  linewidth=2, palette=['#5bc0de','#d9534f'])\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# transport_methodes = df.month.value_counts().index\n",
+    "# transport_count = df.month.value_counts() # e.g. total count of random survey\n",
+    "# col = ['g', 'b'] \n",
+    "# plt.pie(transport_count, labels=transport_methodes,autopct='%1.1f%%')\n",
+    "# plt.title('The Response Rate of Subscribers')\n",
+    "# plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2.shape"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 4.1 More Statistics Analysis"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sns.pairplot(df2, height=1.2, aspect=1.5,hue='y_new')\n",
+    "save_results_to = '/Users/Mony/Downloads/'\n",
+    "plt.savefig(save_results_to+\"Pair Plot\", format='png', quality=95)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "plt.figure(figsize=(60, 60))\n",
+    "sns.heatmap(df2.corr(),cmap=\"seismic\",annot=True)\n",
+    "plt.xlim(0.2,48.1)\n",
+    "plt.ylim(48.1,0.2)\n",
+    "save_results_to = '/Users/Mony/Downloads/'\n",
+    "plt.savefig(save_results_to+\"Heat Map\", format='png', quality=95)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df2.corr()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sns.distplot(df2[\"y_new\"], kde=True)\n",
+    "plt.title(\"Distribution of the Deposit Subscribed\")\n",
+    "save_results_to = '/Users/Mony/Downloads/'\n",
+    "plt.savefig(save_results_to+\"output\", format='png', quality=95)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 5. Models "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 5.1 Building Models and Select the Best Model Depending on the CV Training Scores"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X=df2.drop(columns=['y_new'])\n",
+    "Y=df2['y_new']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "type(X)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X_train,X_test,y_train,y_test=train_test_split(X,Y,test_size=0.2,random_state=13) #split data"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#feature scaling\n",
+    "\n",
+    "scaler=StandardScaler()\n",
+    "X_train= scaler.fit_transform(X_train)\n",
+    "X_test= scaler.fit_transform(X_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [],
+   "source": [
+    "X_train.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y_train.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "type(X_train)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "type(y_train)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 5.1.1 Baseline Model "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### A. Logistic Regression Model (Baseline Model) with Default Hyperparameter"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print('Logistic Regression Model:')\n",
+    "logmodel = LogisticRegression()\n",
+    "cross_val=pd.DataFrame(cross_validate(logmodel,X_train,y_train,cv=10,return_train_score=True,scoring=['accuracy', 'precision', 'recall', 'f1','roc_auc']))\n",
+    "pd.DataFrame(cross_val.mean())\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "From the above results there is no overfitting "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 5.1.2 Model with Default Hyperparameter"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### A. RandomForest Model with Default Hyperparameter"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print('RandomForest Model:')\n",
+    "RF_CV = pd.DataFrame(cross_validate(RandomForestClassifier(), X_train, y_train, cv = 10,return_train_score=True,\n",
+    "                        scoring = ['accuracy', 'precision', 'recall', 'f1','roc_auc',]))\n",
+    "pd.DataFrame(RF_CV.mean())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#RandomForestClassifier.roc_auc"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "From the above results there is an overfitting so we need to deal with the number of trees (default is 10)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### B. K-NN Model with Default Hyperparameter"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print('K-NN Model:')\n",
+    "knn= KNeighborsClassifier(n_neighbors=8)\n",
+    "knn_croos_val=cross_validate(knn,X_train,y_train,return_train_score=True,cv=10,scoring=['f1','roc_auc'])\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(knn_croos_val).mean()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### C.  SVM Model with Default Hyperparameter"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print('SVM Model:')\n",
+    "SVM=SVC( C=1.0,kernel='linear')\n",
+    "SVM_cross_val=cross_validate(SVM, X_train, y_train,return_train_score=False,cv=10,scoring='f1')\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(SVM_cross_val.mean())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### D.Naive Bayes Model with Default Hyperparameter"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "So they do model slightly different things. If you have discrete multiple features to worry about, \n",
+    "you have to use Multinomial NB. But if you only have a single feature to worry about, then you can \n",
+    "make a modelling choice based on the above.\n",
+    "\n",
+    "\n",
+    "https://datascience.stackexchange.com/questions/27624/difference-between-bernoulli-and-multinomial-naive-bayes"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "NB=GaussianNB()\n",
+    "NB_cross_val=pd.DataFrame(cross_validate(NB,X_train,y_train,cv=10,scoring=['accuracy','f1','recall','precision','roc_auc'], return_train_score=True))\n",
+    "pd.DataFrame(NB_cross_val.mean())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "## RandomForestClassifier().get_params().keys()  #To get hyperparameters of each classifers"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "From the above results there is no overfitting "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 5.1.2 Models with GridSearchCV "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### A. K-NN Model with Best Hyperparameter"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "k_value=[x for x in range (1,10)]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "knn_grid_parameters= dict(n_neighbors= k_value)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "score={'balanced_score':make_scorer(metrics.balanced_accuracy_score),'roc_auc': make_scorer(metrics.roc_auc_score),'f1':make_scorer(metrics.f1_score)}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "knn_GridSearchCV=GridSearchCV(estimator=KNeighborsClassifier(), param_grid=knn_grid_parameters,refit='balanced_score',cv=10,scoring=score)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "knn_GridSearchCV.fit(X_train,y_train)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "knn_GridSearchCV.best_score_"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(knn_GridSearchCV.cv_results_)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "knn_GridSearchCV.best_params_"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "knn_GridSearchCV.scoring."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### B. SVM Model with Best Hyperparameter"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#SVM=SVC( C=1.0,kernel='sigmoid')\n",
+    "\n",
+    "SVM_parameters=[{'C':[1,10],'kernel':['linear']},\n",
+    "           {'C':[1,10],'kernel':['rbf'], 'gamma':[x for x in np.arange(0.01,0.02,0.01)]}]\n",
+    "SVM_GridSearchCV=GridSearchCV(estimator=SVC(), param_grid=SVM_parameters,scoring='f1',cv=5)\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "SVM_GridSearchCV.mean()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "SVM_GridSearchCV.fit (X_train,y_train)\n",
+    "SVM_accuracy=SVM_GridSearchCV.best_score_\n",
+    "SVM_accuracy"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "SVM_GridSearchCV.best_params_"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "###  C. RandomForest  Model with Best Hyperparameter ( Selected Model)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "RandomForest_parameters={ \n",
+    "    'n_estimators': [100, 200, 500],\n",
+    "    'max_features': ['auto', 'sqrt', 'log2'],\n",
+    "    'criterion' :['gini', 'entropy']\n",
+    "}\n",
+    "score={'balanced_score':make_scorer(metrics.balanced_accuracy_score),'roc_auc': make_scorer(metrics.roc_auc_score),'f1':make_scorer(metrics.f1_score)}\n",
+    "RandomForest_GridSearchCV=GridSearchCV(estimator=RandomForestClassifier(), param_grid=RandomForest_parameters,refit='balanced_score', cv=10,scoring=score)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "score"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "RandomForest_GridSearchCV.fit(X_train,y_train) "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "RandomForest_GridSearchCV.best_score_"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(RandomForest_GridSearchCV.cv_results_)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "RandomForest_GridSearchCV.best_params_"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print('RandomForest Model:')\n",
+    "RandomForestClassifie=RandomForestClassifier(criterion= 'gini',max_features='auto',n_estimators=100,oob_score=True)\n",
+    "RandomForestClassifie.fit(X_train,y_train)\n",
+    "#pd.DataFrame(RF_CV1.mean())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "RandomForestClassifie_predication=RandomForestClassifie.predict(X_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [],
+   "source": [
+    "metrics.balanced_accuracy_score(y_test,RandomForestClassifie_predication )"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "feature_imp = pd.Series(RandomForestClassifie.feature_importances_,index=X.columns).sort_values(ascending=False)\n",
+    "feature_imp"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Creating a bar plot\n",
+    "sns.barplot(x=feature_imp[:5], y=feature_imp.index[:5])\n",
+    "# Add labels to your graph\n",
+    "plt.xlabel('Feature Importance Score')\n",
+    "plt.ylabel('Features')\n",
+    "plt.title(\"Visualizing Important Features\")\n",
+    "plt.legend()\n",
+    "plt.figure(figsize=(100,100))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### D. Logistic Regression Model with Best Hyperparameter"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#LogisticRegression().get_params().keys()\n",
+    "Logistic_parameters={'C':np.logspace(-3,3,7),'penalty':['l1','l2'] , }\n",
+    "score={'balanced_score':make_scorer(metrics.balanced_accuracy_score),'roc_auc': make_scorer(metrics.roc_auc_score),'f1':make_scorer(metrics.f1_score)}\n",
+    "Logistic_GridSearchCV=GridSearchCV(estimator=LogisticRegression(), param_grid=Logistic_parameters,refit='balanced_score', cv=10,scoring=score)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "Logistic_GridSearchCV.fit(X_train,y_train)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "Logistic_GridSearchCV.best_score_"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "Logistic_GridSearchCV.best_estimator_"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "Logistic_GridSearchCV.best_params_"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(Logistic_GridSearchCV.cv_results_)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### E. Naive Bayes Model with Best Hyperparameter"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "https://stackoverflow.com/questions/39828535/how-to-tune-guassiannb"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 5.2 Evaluation Models"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "RF_ConfusionMatrix = pd.DataFrame(confusion_matrix(y_test,RandomForestClassifie_predication))\n",
+    "#knn_ConfusionMatrix = confusion_matrix(y_test,knn_predictions)\n",
+    "\n",
+    "\n",
+    "\n",
+    "print('The Confusion Matrix for Random Forest Model is :','\\n')\n",
+    "\n",
+    "#print('\\n The Confusion Matrix for K-NN Model is :','\\n',knn_ConfusionMatrix)\n",
+    "RF_ConfusionMatrix"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y_test.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print(classification_report(y_test,RandomForestClassifie_predication))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "metrics.f1_score(y_test,RandomForestClassifie_predication)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Cooked Marketing Metrics"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def tony_lubna_score(y_true,y_predict):\n",
+    "    val_customer= 1000\n",
+    "    cost_call= -0.5\n",
+    "    true_pos= y_true & y_predict \n",
+    "    false_pos= y_true & (~ y_predict)\n",
+    "    profits=((true_pos* val_customer) +(false_pos * cost_call) ).sum()\n",
+    "    return profits"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "scorer=make_scorer(tony_lubna_score,   greater_is_better=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tony_lubna_score(y_test,RandomForestClassifie_predication)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#  Using  Entropy  to  Impute  Missing  Data  in  a  Classification  Task\n",
+    "\n",
+    "\n",
+    "# def ent(arr):\n",
+    "#     S=sum(arr)\n",
+    "#     arr=[ elem/S for elem in arr]\n",
+    "#     return sum([ elem*np.log(elem) for elem in arr if elem!=0])/(1.6094379124341005)+1\n",
+    "\n",
+    "# ent([1,0,1])\n",
+    "\n",
+    "\n",
+    "\n",
+    "\n",
+    "\n",
+    "# import scipy.stats\n",
+    "\n",
+    "# def ent1(data):\n",
+    "#     \"\"\"Calculates entropy of the passed `pd.Series`\n",
+    "#     \"\"\"\n",
+    "#     p_data = data.value_counts()           # counts occurrence of each value\n",
+    "#     entropy = scipy.stats.entropy(p_data)  # get entropy from counts\n",
+    "#     return entropy"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "###  Trevor Pipeline"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "class HelpEstimatorSelection:\n",
+    "\n",
+    "    def __init__(self, transformer, models, params):\n",
+    "        if not set(models.keys()).issubset(set(params.keys())):\n",
+    "            missing_params = list(set(models.keys()) - set(params.keys()))\n",
+    "            raise ValueError(\"Some estimators are missing parameters: %s\" % missing_params)\n",
+    "        self.transformer = transformer\n",
+    "        self.models = models\n",
+    "        self.params = params\n",
+    "        self.keys = models.keys()\n",
+    "        self.grid_searches = {}\n",
+    "\n",
+    "    \n",
+    "        \n",
+    "    def fit(self, X, y, cv=3, n_jobs=3, verbose=1, scoring=None, refit=False):\n",
+    "        def build_pipeline(model):\n",
+    "            return Pipeline([('trans', self.transformer), ('clf', model)])\n",
+    "    \n",
+    "        for key in self.keys:\n",
+    "            print(\"Running GridSearchCV for %s.\" % key)\n",
+    "            model = self.models[key]\n",
+    "            pipe = build_pipeline(model)\n",
+    "            params = self.params[key]\n",
+    "            gs = GridSearchCV(pipe, params, cv=cv, n_jobs=n_jobs,\n",
+    "                              verbose=verbose, scoring=scoring, refit=refit,\n",
+    "                              return_train_score=True)\n",
+    "            gs.fit(X,y)\n",
+    "            self.grid_searches[key] = gs    \n",
+    "\n",
+    "    def score_summary(self, sort_by='mean_score'):\n",
+    "        def row(key, scores, params):\n",
+    "            d = {\n",
+    "                 'estimator': key,\n",
+    "                 'min_score': min(scores),\n",
+    "                 'max_score': max(scores),\n",
+    "                 'mean_score': np.mean(scores),\n",
+    "                 'std_score': np.std(scores),\n",
+    "            }\n",
+    "            return pd.Series({**params,**d})\n",
+    "\n",
+    "        rows = []\n",
+    "        for k in self.grid_searches:\n",
+    "            print(k)\n",
+    "            params = self.grid_searches[k].cv_results_['params']\n",
+    "            scores = []\n",
+    "            for i in range(self.grid_searches[k].cv):\n",
+    "                key = \"split{}_test_score\".format(i)\n",
+    "                r = self.grid_searches[k].cv_results_[key]        \n",
+    "                scores.append(r.reshape(len(params),1))\n",
+    "\n",
+    "            all_scores = np.hstack(scores)\n",
+    "            for p, s in zip(params,all_scores):\n",
+    "                rows.append((row(k, s, p)))\n",
+    "\n",
+    "        df = pd.concat(rows, axis=1, sort=True).T.sort_values([sort_by], ascending=False)\n",
+    "\n",
+    "        columns = ['estimator', 'min_score', 'mean_score', 'max_score', 'std_score']\n",
+    "        columns = columns + [c for c in df.columns if c not in columns]\n",
+    "\n",
+    "        return df[columns]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "\n",
+    "trans = StandardScaler()\n",
+    "\n",
+    "models1 = {\n",
+    "    'RandomForestClassifier': RandomForestClassifier(),\n",
+    "    'LogisticRegressionClassifier': LogisticRegression(),\n",
+    "    'SVC': SVC(),\n",
+    "}\n",
+    "\n",
+    "params1 = {\n",
+    "    'RandomForestClassifier': { 'clf__n_estimators': [10, 100] },\n",
+    "    'LogisticRegressionClassifier': { 'clf__penalty': ['l1', 'l2'], 'clf__C': [0.1, 1] },\n",
+    "    'SVC': [\n",
+    "        {'clf__kernel': ['linear'], 'clf__C': [1, 10]},\n",
+    "        {'clf__kernel': ['rbf'], 'clf__C': [1, 10], 'clf__gamma': [0.001, 0.0001]},\n",
+    "    ]\n",
+    "}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "helper1 = HelpEstimatorSelection(trans, models1, params1)\n",
+    "helper1.fit(X, y, scoring='f1', n_jobs=2)\n",
+    "\n",
+    "helper1.score_summary(sort_by='max_score')"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python [conda env:metis] *",
+   "language": "python",
+   "name": "conda-env-metis-py"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.4"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
