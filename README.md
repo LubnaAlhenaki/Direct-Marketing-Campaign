@@ -67,7 +67,7 @@ The following figures describe the dataset of bank marketing
 
 
 ## 4. Resource Description
-For more details please viste [Project-3 Resource](https://github.com/LubnaAlhenaki/sa1_ds1_submissions/tree/master/projects/project03). This repo contains the following:
+For more details please viste [Direct-Marketing-Campaign Resource](https://github.com/LubnaAlhenaki/Direct-Marketing-Campaign). This repo contains the following:
 * Python code file.
 * Project-3 pdf file that describe the project in details.
 
