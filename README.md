@@ -22,7 +22,7 @@ The following figure shows the workflow of Predicting customers' response to its
 In this project I obtained the dataset from  from [UCI Machine Learning Repository](http://archive.ics.uci.edu/ml/datasets/Bank+Marketing#)
 
 
-![Image test]({{ site.url }}/images/project3-2.png)
+![Image test](/images/project3-2.png)
 
 
 
